@@ -56,7 +56,7 @@ class DplaMetadata():
                 record["description"] = str(self.metadata["description"]).replace('\"', '"').replace("\n", " ").replace("\r", " ")
 
         if "subject" in self.metadata:
-            record["subjects"] = [subject["name"] for subject in self.metadata["subject"]]
+            record["subjects"] = [(subject["name"] if 'name' in subject else '') for subject in self.metadata["subject"]]
 
         if "specType" in self.metadata:
             record["type"] = self.metadata["specType"]
@@ -65,7 +65,6 @@ class DplaMetadata():
             record["creator"] = self.metadata["creator"]
 
         if "language" in self.metadata:
-
             record["language"] = [lang["name"] for lang in self.metadata["language"]]
 
         if "type" in self.metadata:
