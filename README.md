@@ -4,6 +4,8 @@ This code was originally designed to export DPLA extracts to RDF. For the Center
 
 In order for this code to work, you'll need a DPLA [API-Key](http://dp.la/info/developers/codex/policies/#get-a-key). Copy the `default_EXAMPLE.cfg` file to `default.cfg` and add your API key to the `default.cfg` file.
 
+** Note this code only works with Python 2.7 (and probably later). This means it DOES NOT currently work on the CKC webhostinghub account, because that has Python 2.6. **
+
 From the command line, type `python ckc.py`.
 
 Output:
