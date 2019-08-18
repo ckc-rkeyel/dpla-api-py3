@@ -104,7 +104,7 @@ class DplaApi():
                     if any(isinstance(v, list) for v in value):
                         lists += 1
                     else:
-                        line += " | ".join([v.replace("\t", " ") for v in value if v is not None])
+                        line += "|".join([v.replace("\t", " ") for v in value if v is not None])
                 elif isinstance(value, str):
                     line += value.replace("\t", " ")
                 else:
@@ -177,29 +177,51 @@ class DplaApi():
         Positional arguments:
         item (dict) -- Python dictionary from JSON results of DPLA search.
         """
-        d_metadata = DplaMetadata(item["sourceResource"])
-        d_metadata.compile()
-        d_metadata.record["thumbnail"] = item.get("object", "")
-        d_metadata.record["seeAlso"] = item.get("isShownAt", "")
-        if "provider" in item:
-            d_metadata.record["source"] = item["provider"]["name"]
-        elif "dataProvider" in item:
-            d_metadata.record["source"] = item["dataProvider"]
-        else:
-            d_metadata.record["source"] = ""
-        d_metadata.record["discipline"] = self.disciplines
-        # d_metadata.record["genre"] = self._get_genre_from_marc(item)
-        d_metadata.record["genre"] = "none"
-        d_metadata.record["archive"] = ""
-        d_metadata.record["role"] = ""
-        d_metadata.record["federation"] = "SiRO"
-        d_metadata.record["original_query"] = self.query
-        d_metadata.record["id"] = item["@id"]
-        if self.id_match:
-            if self.id_match in d_metadata.record["seeAlso"]:
+        if "sourceResource" in item:
+    
+            d_metadata = DplaMetadata(item["sourceResource"])
+            d_metadata.compile()
+            d_metadata.record["thumbnail"] = item.get("object", "")
+            d_metadata.record["seeAlso"] = item.get("isShownAt", "")
+
+            if d_metadata.record["thumbnail"] != "":
+                if isinstance(d_metadata.record["thumbnail"], list):
+                    d_metadata.record["omeka_thumb"] = "thumb:001:" + str(d_metadata.record["thumbnail"][0])
+                    d_metadata.record["omeka_full"] = "full:001:" + str(d_metadata.record["thumbnail"][0])
+                else:
+                    d_metadata.record["omeka_thumb"] = "thumb:001:" + str(d_metadata.record["thumbnail"])
+                    d_metadata.record["omeka_full"] = "full:001:" + str(d_metadata.record["thumbnail"])
+            else:
+                d_metadata.record["omeka_thumb"] = ""
+                d_metadata.record["omeka_full"] = ""
+
+            if d_metadata.record["seeAlso"] != "":
+                if isinstance(d_metadata.record["seeAlso"], list):
+                    d_metadata.record["omeka_link"] = "linkto:001:" + str(d_metadata.record["seeAlso"][0])
+                else:
+                    d_metadata.record["omeka_link"] = "linkto:001:" + str(d_metadata.record["seeAlso"])
+            else:
+                d_metadata.record["omeka_link"] = ""
+
+            if "provider" in item:
+                d_metadata.record["source"] = item["provider"]["name"]
+            elif "dataProvider" in item:
+                d_metadata.record["source"] = item["dataProvider"]
+            else:
+                d_metadata.record["source"] = ""
+            d_metadata.record["discipline"] = self.disciplines
+            # d_metadata.record["genre"] = self._get_genre_from_marc(item)
+            d_metadata.record["genre"] = "none"
+            d_metadata.record["archive"] = ""
+            d_metadata.record["role"] = ""
+            d_metadata.record["federation"] = "SiRO"
+            d_metadata.record["original_query"] = self.query
+            d_metadata.record["id"] = item["@id"]
+            if self.id_match:
+                if self.id_match in d_metadata.record["seeAlso"]:
+                    self.metadata_records.append(d_metadata.record)
+            else:
                 self.metadata_records.append(d_metadata.record)
-        else:
-            self.metadata_records.append(d_metadata.record)
 
     def _get_genre_from_marc(self, item):
         """Check for 'literary form' value in MARC record.

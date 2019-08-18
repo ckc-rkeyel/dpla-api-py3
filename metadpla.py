@@ -18,6 +18,7 @@ class DplaMetadata():
 
                         "date": "",
                         "title": "",
+                        "description": [],
                         "subjects": [],
                         "type": [],
                         "creator": [],
@@ -43,10 +44,16 @@ class DplaMetadata():
 
         if "title" in self.metadata:
             if isinstance(self.metadata["title"], list):
-                record["title"] = self.metadata["title"][0]
+                record["title"] = str(self.metadata["title"][0]).replace('\"', '"')
 
             else:
-                record["title"] = self.metadata["title"]
+                record["title"] = str(self.metadata["title"]).replace('\"', '"')
+
+        if "description" in self.metadata:
+            if isinstance(self.metadata["description"], list):
+                record["description"] = [str(desc).replace('\"', '"').replace("\n", " ").replace("\r", " ") for desc in self.metadata["description"]]
+            else:
+                record["description"] = str(self.metadata["description"]).replace('\"', '"').replace("\n", " ").replace("\r", " ")
 
         if "subject" in self.metadata:
             record["subjects"] = [subject["name"] for subject in self.metadata["subject"]]
