@@ -1,18 +1,14 @@
-## DPLA API Interactions
+## Center for Knit and Crochet DPLA extraction
 
-Code to interact with the DPLA API. Designed specifically to produce output suited to further, manual data entry, for eventual conversion to RDF according to the [Collex standard](http://wiki.collex.org/index.php/Main_Page).
+This code was originally designed to export DPLA extracts to RDF. For the Center for Knit and Crochet, the code has been modified to produce TSV (tab-separated values) output suitable for conversion to CSV (comma-separated values) and import into Omeka. **Please see the original README on the parent repository for more general instructions on how to use this code to extract data from DPLA.**
 
-Code below can be used to connect to the DPLA API and process search results. In order to search, you'll need a DPLA [API-Key](http://dp.la/info/developers/codex/policies/#get-a-key). This should be stored in the `default.cfg`, which you'll need to update in order for the scripts below to work.
+In order for this code to work, you'll need a DPLA [API-Key](http://dp.la/info/developers/codex/policies/#get-a-key). Copy the `default_EXAMPLE.cfg` file to `default.cfg` and add your API key to the `default.cfg` file.
 
-    from dpla_api import DplaApi
-    da = DplaApi()
-    da.search("abolitionists movements", page_size=500) # Run search, page_size is capped (by DPLA) at 500, but code will iterate through as many pages as necessary to gather all results.
-    da.build_arc_rdf_dataset()
-
+From the command line, type `python ckc.py`.
 
 Output:
 
-    Query: abolitionists movements
+    Query: 'crochet* OR knit*' returned 7000 results
     ----Accessing results page 2
     ----Accessing results page 3
     ----Accessing results page 4
@@ -26,73 +22,73 @@ Output:
     ----Accessing results page 12
     ----Accessing results page 13
     ----Accessing results page 14
-    ----Accessing results page 15
-    ----Accessing results page 16
-    ----Accessing results page 17
-    ----Accessing results page 18
-    Query 'abolitionists movements' returned 8884 records (Check: 8884 records transferred)
+    ----Check: 7000 records transferred
+    Completed writing data/ckc.txt
 
-After results have been gathered, store the results in a tab-separated table.
+Download the `data/ckc.txt` file to your computer, and open it in Microsoft Excel.
 
-    da.create_tsv() # create TSV results file.
+This can be a tricky process to make sure special characters are preserved. Open Excel first, use the Open, Browse option, then find the text file. In the Text Import Wizard, use the following options:
 
-The idea of this sequence of events is that the tsv file makes it possible to then manually edit the returned entries, particuarly when loaded into Excel or a Google spreadsheet. This workflow `DPLA->TSV->RDF` was designed specifically to support the parameters and values of ARC.
+    Start import at row: 1
+    File origin: 65001: Unicode (UTF-8)
+    My data has headers: checked
+    (next)
 
-Once editing has been completed, or even if it has not -- the script will work anyway to fill in default values -- run the lines of code below to create an RDF XML file for each record, named according to its unique DPLA ID.
+    Delimiters: Tab
+    Text qualifier: "
+    (next)
 
-    from buildrdf import BuildRdf
-    br = BuildRdf()
-    br.build_rdf_from_tsv("data/radicalism-all-dpla.txt", lines_to_process = 1)
+    All columns as "General"
+    (next)
 
-The `lines-to-process` parameter tells the script how many records to process, and how many files to write. 
+Save the file as `ckc.csv` with a file type of CSV UTF-8.
 
-Output of the above code, including full RDF record:
+Login to the CKC Omeka site, and go to the Admin page. 
 
-    Processing http://dp.la/api/items/0daa0bab0c6c1b95c474af2de2ca0f6c : The abolitionists; a collection of their writing
-    
-    <rdf:RDF xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" 
-             xmlns:collex="http://www.collex.org/schema#"         
-             xmlns:dc="http://purl.org/dc/elements/1.1/" 
-             xmlns:sro="http://www.lib.msu.edu/sro/schema#" 
-             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"     
-             xmlns:role="http://www.loc.gov/loc.terms/relators/" 
-             xmlns:dcterms="http://purl.org/dc/terms/">
-        <sro:dpla rdf:about="http://dp.la/api/items/0daa0bab0c6c1b95c474af2de2ca0f6c">
-            <collex:federation>SRO</collex:federation>
-            <collex:archive>DPLA</collex:archive>
-            <dc:title>The abolitionists; a collection of their writing</dc:title>
-            <role:CRE>Ruchames, Louis, 1917-</role:CRE>
-            <dc:source>HathiTrust</dc:source>
-            <dc:subject>Antislavery movements--United States</dc:subject>
-            <dc:subject>Slavery--United States--Controversial literature</dc:subject>
-            <dc:subject>Abolitionists</dc:subject>
-            <collex:discipline>History</collex:discipline>
-            <collex:genre>Nonfiction</collex:genre>
-            <dc:type>Codex</dc:type>
-            <dc:date>
-                <rdfs:label>[1963]</rdfs:label>
-                <rdf:value>1963</rdf:value>
-            </dc:date>
-            <collex:fulltext>TRUE</collex:fulltext>
-            <dc:language>English</dc:language>
-            <rdfs:seeAlso rdf:resource="http://catalog.hathitrust.org/Record/000408823"/>
-            <collex:thumbnail rdf:resource="https://books.google.com/books/content?id=9Ml2AAAAMAAJ&amp;printsec=frontcover&amp;img=1&amp;zoom=5"/>
-        </sro:dpla>
-    </rdf:RDF>
+Click on the CSV Import+ entry on the left menu.
+
+Attach the csv file to the form.
+
+Use the following settings for a new import:
+
+    Column delimiter: comma
+    Enclosure: " (double quote)
+    Element delimiter: pipe
+    Tag delimiter: pipe
+    File delimiter: pipe
+
+    Default item type: Still Image
+    Default collection: Library and Museum Collections
+    Make records public: checked
+
+    Identifier field: Identifer
+    Action: Update the record if it exists, else create one
+    Contains extra data: Perhaps, so the mapping should be done manually.
+
+Click Next.
+
+Map the following element fields:
+
+    omeka_link -> Relation
+    omeka_thumb -> Relation
+    description -> Description
+    language -> Language
+    creator -> Creator
+    id -> Identifier
+    title -> Title
+    source -> Source
+    subjects -> Subject
+    omeka_full -> Relation
+    date -> Date
+    type -> Type
+    seeAlso -> References
+
+In the special values column, set the following:
+
+    identifier -> Identifier
+
+Perform the import.
+
+Note that there is a bug that puts everything in an [Untitled] collection. You have to move them to the Library & Museum Collections collection.
 
 
----
-
-
-Code below used to load a list of thousands of searches and run them all in sequence, before storing the results in a tsv file.
-
-    from dpla_api import DplaApi
-    da = DplaApi()
-    import json
-    with open("data/estc_subject_list_20150312.json", "r") as estc_subjects:
-        subjects = json.load(estc_subjects)
-        for subject in subjects:
-            da.search(subject, page_size=500)
-            da.build_arc_rdf_dataset()
-        print "Returned {0} total results".format(len(da.metadata_records))
-    da.create_tsv()
