@@ -4,7 +4,7 @@ This code was originally designed to export DPLA extracts to RDF. For the Center
 
 In order for this code to work, you'll need a DPLA [API-Key](http://dp.la/info/developers/codex/policies/#get-a-key). Copy the `default_EXAMPLE.cfg` file to `default.cfg` and add your API key to the `default.cfg` file.
 
-** Note this code only works with Python 2.7 (and probably later). This means it DOES NOT currently work on the CKC webhostinghub account, because that has Python 2.6. **
+** Note, this version of the code has been updated to run on python3, and can be run on a mac using terminal **
 
 1. Login to a suitable Linux shell account (via SSH) or use a mac terminal running python
 2. Type `git clone https://github.com/ckc-rkeyel/dpla-api-py3.git` This will make a new folder, dpla-api, with the code in it.
