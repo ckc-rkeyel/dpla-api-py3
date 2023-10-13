@@ -7,7 +7,7 @@ In order for this code to work, you'll need a DPLA [API-Key](http://dp.la/info/d
 ** Note this code only works with Python 2.7 (and probably later). This means it DOES NOT currently work on the CKC webhostinghub account, because that has Python 2.6. **
 
 1. Login to a suitable Linux shell account (via SSH) or use a mac terminal running python
-2. Type `git clone [https://github.com/WaltRiceJr/dpla-api](https://github.com/ckc-rkeyel/dpla-api-py3).git` This will make a new folder, dpla-api, with the code in it.
+2. Type `git clone https://github.com/ckc-rkeyel/dpla-api-py3.git` This will make a new folder, dpla-api, with the code in it.
 3. Change to the folder: `cd dpla-api`
 4. Copy the example config file so you can add the API key: `cp default_EXAMPLE.cfg default.cfg`
 5. Edit the config file: `nano default.cfg`
