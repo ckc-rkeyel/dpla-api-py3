@@ -8,11 +8,11 @@ In order for this code to work, you'll need a DPLA [API-Key](http://dp.la/info/d
 
 1. Login to a suitable Linux shell account (via SSH) or use a mac terminal running python
 2. Type `git clone https://github.com/ckc-rkeyel/dpla-api-py3.git` This will make a new folder, dpla-api, with the code in it.
-3. Change to the folder: `cd dpla-api`
+3. Change to the folder: `cd dpla-api-py3`
 4. Copy the example config file so you can add the API key: `cp default_EXAMPLE.cfg default.cfg`
 5. Edit the config file: `nano default.cfg`
 6. Put in the DPLA API key. Press Ctrl-X when done, follow the prompts to save changes.
-7. Run the script: `python3 ckc.py` (on a mac running multiple versions of python)
+7. Run the script: `python3 ckc.py` (on a mac running multiple versions of python)
 8. Assuming no errors, the data file is at `~/dpla-api/data/ckc.txt`. You can grab it by FTP.
 
 Output:
