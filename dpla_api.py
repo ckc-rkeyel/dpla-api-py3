@@ -2,7 +2,7 @@
 from __future__ import division
 from dpla.api import DPLA
 from lxml import etree
-import ConfigParser
+import configparser  # Changed from ConfigParser to configparser
 from metadpla import DplaMetadata
 from hathi import HathiBibApi
 import codecs
@@ -38,16 +38,16 @@ class DplaApi():
             self.query = q_value
             self.result = self.dpla.search(searchFields=q_value, page_size=page_size)
 
-        print "Query: '{0}' returned {1} results".format(self.query, self.result.count)
-        time.sleep(.5)
+        print("Query: '{0}' returned {1} results".format(self.query, self.result.count))
+        time.sleep(0.5)
         self.all_returned_items = self.result.items
         if self.result.count > self.result.limit:
             pages = int(math.ceil(self.result.count / self.result.limit))
             for page in range(2, pages + 1):
-                print "----Accessing results page {0}".format(page)
+                print("----Accessing results page {0}".format(page))
                 self.result = self.dpla.search(q=q_value, page_size=page_size, page=page)
                 self.all_returned_items += self.result.items
-                time.sleep(.5)
+                time.sleep(0.5)
 
     def build_arc_rdf_dataset(self, check_match=True, disciplines="", id_match=None):
         """Iterate over search results and pull necessary elements to create ARC RDF.
@@ -62,8 +62,7 @@ class DplaApi():
         if check_match:
             self.__load_match_data()
 
-        print "----Check: {0} records transferred"\
-              .format(len(self.all_returned_items))
+        print("----Check: {0} records transferred".format(len(self.all_returned_items)))
         rdf_matches = 0
         new_records = 0
         for item in self.all_returned_items:
@@ -74,12 +73,9 @@ class DplaApi():
                     self.__process_metadata(item)
                     self.existing_records.append(item["@id"])
                     new_records += 1
-
             else:
                 self.__process_metadata(item)
 
-        # print "----Found: {0} existing RDF records".format(rdf_matches)
-        # print "----Saved: {0} new metadata records".format(new_records)
         self.__load_match_data(reset_match_file=True)
         self._store_match_data()
 
@@ -118,7 +114,7 @@ class DplaApi():
             for line in tsv_lines:
                 output_file.write(line)
 
-        print "Completed writing {0}".format(output_path)
+        print("Completed writing {0}".format(output_path))
 
     def update_rdf_registry(self, rdf_dir="rdf", reset_matches=False):
         """Update listings of already-processed items.
@@ -141,8 +137,8 @@ class DplaApi():
                         update_count += 1
                     else:
                         match_count += 1
-        print "Matching records: {0}".format(match_count)
-        print "New records: {0}".format(update_count)
+        print("Matching records: {0}".format(match_count))
+        print("New records: {0}".format(update_count))
         self._store_match_data()
 
     def _store_match_data(self):
@@ -152,21 +148,22 @@ class DplaApi():
 
     def __load_dpla_key(self):
         """Load DPLA API Key from config file."""
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read("default.cfg")
         return config.get("dpla_api", "api_key")
 
     def __load_match_data(self, reset_match_file=False):
         """Prepare data on previous search results."""
         self.match_file = self.__load_match_settings()
-        if reset_match_file is True:
+        if reset_match_file:
             self.existing_records = []
         else:
-            self.existing_records = json.load(open(self.match_file, "r"))
+            with open(self.match_file, "r") as match_file:
+                self.existing_records = json.load(match_file)
 
     def __load_match_settings(self):
         """Load file containing list of all previously processed items."""
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.read("default.cfg")
         return config.get("check_match", "match_file")
 
@@ -178,7 +175,6 @@ class DplaApi():
         item (dict) -- Python dictionary from JSON results of DPLA search.
         """
         if "sourceResource" in item:
-    
             d_metadata = DplaMetadata(item["sourceResource"])
             d_metadata.compile()
             d_metadata.record["thumbnail"] = item.get("object", "")
@@ -210,7 +206,6 @@ class DplaApi():
             else:
                 d_metadata.record["source"] = ""
             d_metadata.record["discipline"] = self.disciplines
-            # d_metadata.record["genre"] = self._get_genre_from_marc(item)
             d_metadata.record["genre"] = "none"
             d_metadata.record["archive"] = ""
             d_metadata.record["role"] = ""
@@ -232,28 +227,19 @@ class DplaApi():
             (str) genre value(s) to include in output.
         """
         genre_value = "none"
-        value_map = {"0": "Nonfiction",
-                     "1": "Fiction",
-                     "d": "Drama",
-                     "e": "Nonfiction",
-                     "f": "Fiction",
-                     "i": "Correspondence",
-                     "j": "Fiction",
-                     "p": "Poetry"
-                     }
-        """
-        This method could be used with DPLA-returned MARC info, if the spacing
-        of the 008 field was preserved.
-        if self._marc_record(item):
-            for field in item["originalRecord"]["controlfield"]:
-                if field["tag"] == "008" and len(field["#text"]) > 33:
-                    genre = field["#text"][33]
-                    genre_value = value_map.get(genre, "")
-        """
-        # Access bibliographic information via the HathiTrust API.
+        value_map = {
+            "0": "Nonfiction",
+            "1": "Fiction",
+            "d": "Drama",
+            "e": "Nonfiction",
+            "f": "Fiction",
+            "i": "Correspondence",
+            "j": "Fiction",
+            "p": "Poetry"
+        }
+
         if "hathitrust" in item.get("isShownAt", ""):
             record = self._get_hathi_record(item)
-            # print record
             marc_string = record["records"][str(self.hathi_id)]["marc-xml"]
             genre = self._extract_genre(marc_string)
             genre_value = value_map.get(genre, "")
@@ -307,55 +293,52 @@ class DplaApi():
             f.write("<td>Title</td>")
             f.write("<td>Link</td>")
             f.write("</tr>")
-            for item in result.items:
+            for item in self.result.items:
                 title = item["sourceResource"]["title"]
-                url = unicode(item["isShownAt"])
+                url = str(item["isShownAt"])  # Changed from unicode
                 if isinstance(title, list):
-                    title_clean = unicode(title[0])
-
+                    title_clean = str(title[0])  # Changed from unicode
                 else:
-                    title_clean = unicode(title)
+                    title_clean = str(title)  # Changed from unicode
 
                 f.write("<tr>")
-                f.write("<td>"+title_clean.encode("UTF-8")+"</td>")
-                f.write("<td><a href='"+url+"'>"+url+"</td>")
-                f.write("<tr>")
+                f.write("<td>{}</td>".format(title_clean))
+                f.write("<td><a href='{}'>{}</a></td>".format(url, url))
+                f.write("</tr>")
             f.write("</table>")
 
     def return_marcxml(self):
         if self.result is None:
-            print "Error -- No data available -- Run search first"
+            print("Error -- No data available -- Run search first")
             return
 
-        for item in self.items:
+        xml_processed = 0
+        errors = 0
+        for item in self.all_returned_items:  # Fixed to use self.all_returned_items
             json_record = item["originalRecord"]
             xml = self.build_marcxml_record(json_record)
             if xml is not None:
-                with open(os.path.join(output_path, str(item["id"]))+".xml", "w") as f:
-                    f.write(etree.tostring(xml, encoding="utf-8", xml_declaration=True))
+                with open(os.path.join(output_path, str(item["id"])) + ".xml", "w") as f:
+                    f.write(etree.tostring(xml, encoding="utf-8", xml_declaration=True).decode("utf-8"))
                 xml_processed += 1
             else:
                 errors += 1
 
-        print "{0} Errors Returned".format(errors)
-        print "{0} XML Files Written".format(xml_processed)
-        print "{0} Non Standard Records".format(self.non_standard_records)
-        print "{0} MARC Namespace Records".format(self.marc_namespace)
+        print("{0} Errors Returned".format(errors))
+        print("{0} XML Files Written".format(xml_processed))
+        print("{0} Non Standard Records".format(self.non_standard_records))
+        print("{0} MARC Namespace Records".format(self.marc_namespace))
 
     def build_marcxml_record(self, json_record):
-
         root = None
         if "leader" not in json_record and "metadata" not in json_record:
             self.non_standard_records += 1
-            #print "\n================Non Standard Record===============\n"
-            #print json_record
             return None
 
         elif "metadata" in json_record:
-
             if "marc:record" in json_record["metadata"]:
                 self.marc_namespace += 1
-                json_record = json_record["metadata"]["marc:record"] 
+                json_record = json_record["metadata"]["marc:record"]
                 try:
                     root = etree.Element("record", xmlns="http://www.loc.gov/MARC21/slim")
                     leader = etree.SubElement(root, "leader")
@@ -365,7 +348,6 @@ class DplaApi():
                         controlfield.text = c["#text"]
                     for d in json_record["marc:datafield"]:
                         datafield = etree.SubElement(root, "datafield", tag=d["tag"], ind1=d["ind1"], ind2=d["ind2"])
-                        # When there's only one subfield, d["subfield"] will return a dict. Otherwise, a list of dicts.
                         if isinstance(d["marc:subfield"], dict):
                             subfield = etree.SubElement(datafield, "subfield", code=d["marc:subfield"]["code"])
                             subfield.text = d["marc:subfield"]["#text"]
@@ -374,14 +356,12 @@ class DplaApi():
                                 subfield = etree.SubElement(datafield, "subfield", code=s["code"])
                                 subfield.text = s["#text"]
                 except Exception as e:
-                    
-                    print "\n================Error In Record===============\n"
-                    print e
-                    print json_record
+                    print("\n================Error In Record===============\n")
+                    print(e)
+                    print(json_record)
                     return None
 
         elif "leader" in json_record:
-
             try:
                 root = etree.Element("record", xmlns="http://www.loc.gov/MARC21/slim")
                 leader = etree.SubElement(root, "leader")
@@ -391,7 +371,6 @@ class DplaApi():
                     controlfield.text = c["#text"]
                 for d in json_record["datafield"]:
                     datafield = etree.SubElement(root, "datafield", tag=d["tag"], ind1=d["ind1"], ind2=d["ind2"])
-                    # When there's only one subfield, d["subfield"] will return a dict. Otherwise, a list of dicts.
                     if isinstance(d["subfield"], dict):
                         subfield = etree.SubElement(datafield, "subfield", code=d["subfield"]["code"])
                         subfield.text = d["subfield"]["#text"]
@@ -400,27 +379,9 @@ class DplaApi():
                             subfield = etree.SubElement(datafield, "subfield", code=s["code"])
                             subfield.text = s["#text"]
             except Exception as e:
-                
-                print "\n================Error In Record===============\n"
-                print e
-                print json_record
+                print("\n================Error In Record===============\n")
+                print(e)
+                print(json_record)
                 return None
 
         return root
-        """
-        # Changes from lib computer. For future review.
-        root = etree.Element("record", xmlns="http://www.loc.gov/MARC21/slim")
-        leader = etree.SubElement(root, "leader")
-        leader.text = json_record["leader"]
-        for c in json_record["controlfield"]:
-            controlfield = etree.SubElement(root, "controlfield", tag=c["tag"])
-            controlfield.text = c["#text"]
-
-            for row in q_datafields:
-                datafield = etree.SubElement(root,"datafield",tag=row.tag,ind1=row.ind1,ind2=row.ind2)
-                q_subfields = Subfields.objects.using("metagds").filter(datafield=row.datafield_id)
-                for sub_row in q_subfields:
-                    subfield = etree.SubElement(datafield,"subfield",code=sub_row.code)
-                    subfield.text = sub_row.content
-        """
-
